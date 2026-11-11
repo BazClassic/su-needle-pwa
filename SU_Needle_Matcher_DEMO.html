@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#3b82f6">
+<title>SU Needle Matcher — DEMO v1.05</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="SU Needles Demo" />
+
+<style>
+:root,html[data-theme="light"]{
+  --bg:#f0f2f5;--card:#fff;--ink:#1a2332;--muted:#5c6b7a;--accent:#1f4e79;
+  --green:#198754;--green-bg:#d4edda;--red-bg:#f8d7da;--red:#b02a37;
+  --blue-bg:#d6eaf8;--blue:#0d6efd;--yellow:#fff3cd;
+  --shadow:0 2px 8px rgba(0,0,0,.08);--border:#dee2e6;--input-bg:#fff;
+  --nav-bg:#fff;--chart-bg:#0f1720;--appbar:#1f4e79;--appbar-ink:#fff
+}
+html[data-theme="dark"]{
+  --bg:#0b1220;--card:#151e2e;--ink:#e8eef7;--muted:#9aabbf;--accent:#3b82f6;
+  --green:#22c55e;--green-bg:rgba(34,197,94,.15);--red-bg:rgba(248,113,113,.18);--red:#f87171;
+  --blue-bg:rgba(96,165,250,.18);--blue:#60a5fa;--yellow:#3d3420;
+  --shadow:0 2px 12px rgba(0,0,0,.35);--border:rgba(255,255,255,.08);--input-bg:#0f1720;
+  --nav-bg:#0f1720;--chart-bg:#0a1018;--appbar:linear-gradient(135deg,#3b82f6,#1e40af);--appbar-ink:#fff
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.5;padding-bottom:88px;font-size:16px}
+header.appbar{background:var(--appbar);color:var(--appbar-ink);padding:10px 12px;position:sticky;top:0;z-index:20;
+  box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+header.appbar h1{margin:0;font-size:1.05rem;font-weight:700}
+header.appbar .sub{margin:2px 0 0;font-size:.75rem;opacity:.85}
+.theme-btn{border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.15);color:#fff;border-radius:8px;
+  padding:7px 10px;font-size:.75rem;font-weight:600;cursor:pointer}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-row img{width:32px;height:32px;border-radius:8px}
+.bar-center{text-align:center}
+.bar-right{text-align:right;font-size:.7rem;opacity:.9}
+.bar-credit strong{display:block}
+.demo-banner{background:#f97316;color:#fff;text-align:center;padding:6px 10px;font-size:.8rem;font-weight:700;letter-spacing:.03em}
+main{max-width:720px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 8px;font-size:1rem;font-weight:700}
+.card.result-closest{border-left:4px solid var(--accent)}
+.hint{font-size:.9rem;color:var(--muted);margin:6px 0 0;line-height:1.45}
+label{display:block;font-size:.8rem;color:var(--muted);margin:8px 0 4px}
+select,input[type=text],input[type=password],input[type=number]{
+  width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);
+  background:var(--input-bg);color:var(--ink);font-size:.95rem}
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-top:8px}
+.stations .sta{text-align:center}
+.stations .sta span{display:block;font-size:.7rem;color:var(--muted);margin-bottom:2px}
+.stations input{text-align:center;padding:7px 4px;font-size:.85rem}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;border:none;font-weight:600;font-size:.9rem;cursor:pointer}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--border)}
+.btn-sm{padding:7px 12px;font-size:.82rem}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.nav-tabs{position:fixed;bottom:0;left:0;right:0;background:var(--nav-bg);border-top:1px solid var(--border);
+  display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.nav-tabs button{flex:1;border:none;background:none;padding:12px 8px;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer}
+.nav-tabs button.active{color:var(--accent)}
+.section-title{font-size:1.02rem;font-weight:700;margin:16px 0 8px}
+.section-title.richer{color:var(--red)}
+.section-title.leaner{color:var(--blue)}
+.graph-wrap{position:relative;width:100%;margin:0 0 14px;background:var(--chart-bg);border-radius:10px;overflow:hidden}
+.graph-wrap canvas{display:block;width:100%;height:220px}
+.scale-toggle{display:flex;gap:6px;margin:6px 0 8px}
+.scale-toggle button{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--ink);font-size:.8rem;font-weight:600;cursor:pointer}
+.scale-toggle button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+.chip-richer{background:var(--red-bg);color:var(--red)}
+.chip-leaner{background:var(--blue-bg);color:var(--blue)}
+.chip-ok{background:var(--green-bg);color:var(--green)}
+.hidden{display:none!important}
+#lockScreen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+#lockScreen .card{max-width:340px;width:100%;text-align:center}
+#lockScreen img{width:64px;height:64px;border-radius:14px;margin-bottom:10px}
+#lockScreen h1{font-size:1.25rem;margin:0 0 4px}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px}
+.list-row:last-child{border-bottom:none}
+.list-row .name{font-weight:700}
+.list-row .meta{font-size:.82rem;color:var(--muted)}
+.pick-check{width:18px;height:18px}
+.graph-legend{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px;font-size:.8rem}
+.graph-legend span{display:inline-flex;align-items:center;gap:4px}
+.graph-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.info-body{font-size:.92rem;line-height:1.55;margin:0}
+</style>
+</head>
+<body>
+
+<div id="lockScreen">
+  <div class="card">
+    <img src="icon-192.png" alt="" width="32" height="32" style="border-radius:8px">
+    <h1>SU Needle Matcher</h1>
+    <p class="hint" style="margin-bottom:12px">DEMO VERSION — Marketing Preview<br>Limited sample data only</p>
+    <label style="text-align:left">Demo Password</label>
+    <input type="password" id="pwInput" placeholder="Enter demo password" autocomplete="off">
+    <button type="button" class="btn btn-primary" style="width:100%;margin-top:10px" id="btnUnlock">Unlock Demo</button>
+    <p class="hint" style="margin-top:12px">Password: <strong>demo</strong></p>
+  </div>
+</div>
+
+<div class="demo-banner">DEMO VERSION — Sample data only • Not the full application</div>
+
+<header class="appbar">
+  <div class="titles brand-row">
+    <img src="favicon-32.png" alt="" width="32" height="32">
+    <div>
+      <h1>SU Needle Matcher <span style="font-weight:500;opacity:.85;font-size:.85rem">Demo</span></h1>
+      <p class="sub" id="tableLabel">0.090″ Fixed (demo subset)</p>
+    </div>
+  </div>
+  <div class="bar-center"><button type="button" class="theme-btn" id="btnTheme">Light</button></div>
+  <div class="bar-right"><div class="bar-credit"><strong>DEMO</strong>Marketing Preview</div></div>
+</header>
+
+<main>
+<section id="view-input">
+  <div class="card">
+    <h2>Needle table</h2>
+    <select id="tableSelect" disabled>
+      <option>0.090″ JET NEEDLES (FIXED) — Demo subset</option>
+    </select>
+    <p class="hint">Demo contains 5 sample needles only (MOW, GG, EB, AA, GL).</p>
+  </div>
+  <div class="card">
+    <h2>Load known needle</h2>
+    <select id="needleSelect">
+      <option value="">— Custom / keep current —</option>
+      <option value="MOW">MOW</option>
+      <option value="GG">GG</option>
+      <option value="EB">EB</option>
+      <option value="AA">AA</option>
+      <option value="GL">GL</option>
+    </select>
+    <p class="hint">Values support up to 5 decimal places.</p>
+  </div>
+  <div class="card">
+    <h2>Station diameters (inches)</h2>
+    <p class="hint" id="stationHint" style="margin:0 0 8px">Enter or load a profile. Trailing blanks are allowed.</p>
+    <div class="stations" id="stationInputs"></div>
+  </div>
+  <button type="button" class="btn btn-primary" id="btnMatch" style="width:100%">Find matches</button>
+</section>
+
+<section id="view-results" class="hidden">
+  <div id="closestCard" class="card result-closest"></div>
+
+  <div class="card">
+    <h2>Direct compare (any needle)</h2>
+    <p class="hint">Pick any needle from this demo set — or enter partial station values — for a side-by-side graph vs your target.</p>
+    <label>Load from table</label>
+    <select id="directNeedleSelect">
+      <option value="">— Choose needle —</option>
+      <option value="MOW">MOW</option>
+      <option value="GG">GG</option>
+      <option value="EB">EB</option>
+      <option value="AA">AA</option>
+      <option value="GL">GL</option>
+    </select>
+    <p class="hint">Or type values below (leave blank to skip a station).</p>
+    <div class="stations" id="directStationInputs"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary btn-sm" id="btnDirectApply">Apply to graphs</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnDirectClear">Clear direct compare</button>
+    </div>
+    <div id="directMetrics" class="hidden" style="margin-top:8px;font-size:.85rem"></div>
+  </div>
+
+  <div class="card">
+    <h2>Profile comparison</h2>
+    <p class="hint">Target always shown. Tick up to 4 list needles, plus optional direct compare.</p>
+    <div class="graph-legend" id="graphLegend"></div>
+    <p class="section-title" style="margin:8px 0 4px;font-size:.95rem">Diameter (shape / RMS)</p>
+    <div class="graph-wrap"><canvas id="chartDiameter" width="640" height="220"></canvas></div>
+    <p class="section-title" style="margin:8px 0 4px;font-size:.95rem">Fuel capacity vs target (%)</p>
+    <div class="scale-toggle">
+      <button type="button" id="btnScaleOverview" class="active">Overview</button>
+      <button type="button" id="btnScaleFull">Full scale</button>
+    </div>
+    <div class="graph-wrap"><canvas id="chartFuel" width="640" height="220"></canvas></div>
+    <p class="hint">Overview scales Y from stations 3→(N−2). Full scale uses every station.</p>
+    <p class="hint" id="pickCount">0 of 4 selected</p>
+  </div>
+
+  <div class="section-title richer">3 progressive richer suggestions</div>
+  <div class="card" id="richerList"></div>
+  <div class="section-title leaner">3 progressive leaner suggestions</div>
+  <div class="card" id="leanerList"></div>
+  <div class="section-title">Top matches (demo set)</div>
+  <div class="card" id="top20List"></div>
+  <button type="button" class="btn btn-ghost" id="btnBack" style="width:100%;margin-top:8px">← Change target</button>
+</section>
+
+<section id="view-info" class="hidden">
+  <div class="card">
+    <h2>What this tool does</h2>
+    <p class="info-body">Compare a measured or desired SU carburettor needle profile against the official tables. Ranks by shape (RMS) and annular fuel capacity. Use <strong>Direct compare</strong> to overlay any needle even if it is not in the top list.</p>
+  </div>
+  <div class="card">
+    <h2>About this Demo</h2>
+    <p class="info-body">This is a <strong>marketing preview</strong> with a fixed set of 5 sample needles (MOW, GG, EB, AA, GL) from the 0.090″ Fixed family. Layout and workflow match the full application. The complete product includes all official tables, full matching engine, variable-length handling and author tools.</p>
+  </div>
+  <div class="card">
+    <h2>How to use the demo</h2>
+    <p class="info-body">1. Load a sample needle or type station diameters<br>
+    2. Tap <strong>Find matches</strong><br>
+    3. Review closest match, richer/leaner suggestions and graphs<br>
+    4. Use Direct compare or tick needles to overlay on the charts</p>
+  </div>
+  <div class="card">
+    <h2>SU Needle Matcher</h2>
+    <p class="info-body" style="color:var(--muted)">Tools for the Classic Car Community<br>Version 1.05 — Demo</p>
+  </div>
+</section>
+</main>
+
+<nav class="nav-tabs">
+  <button type="button" class="active" id="tabInput">Input</button>
+  <button type="button" id="tabResults">Results</button>
+  <button type="button" id="tabInfo">Info</button>
+</nav>
+
+<script>
+const NEEDLES = {"MOW": [0.089, 0.0855, 0.0837, 0.082, 0.0808, 0.0795, 0.0783, 0.077, 0.0758, 0.0745, 0.0732, 0.072], "GG": [0.089, 0.087, 0.0845, 0.0825, 0.0808, 0.079, 0.078, 0.077, 0.0758, 0.0745, 0.0729], "EB": [0.089, 0.0855, 0.0835, 0.0815, 0.0795, 0.0777, 0.0762, 0.075, 0.074, 0.073, 0.072, 0.071], "AA": [0.089, 0.0845, 0.08, 0.0767, 0.0735, 0.071, 0.0689, 0.0661, 0.0638, 0.0614, 0.0591, 0.0566, 0.054], "GL": [0.089, 0.084, 0.082, 0.0795, 0.0772, 0.075, 0.0727, 0.0706, 0.0685, 0.0664, 0.0642, 0.0621, 0.06]};
+const JET = 0.09;
+const MAX_STA = 13;
+const COLORS = ["#f8fafc","#60a5fa","#f472b6","#34d399","#f97316"];
+
+let lastTarget = null;
+let lastResults = [];
+let picked = new Set();
+let directProfile = null;
+let directName = null;
+let fuelMode = "overview";
+
+function $(id){ return document.getElementById(id); }
+function showView(name){
+  ["input","results","info"].forEach(v=>{
+    $("view-"+v).classList.toggle("hidden", v!==name);
+    const tab = $("tab"+v.charAt(0).toUpperCase()+v.slice(1));
+    if(tab) tab.classList.toggle("active", v===name);
+  });
+}
+$("tabInput").onclick = ()=>showView("input");
+$("tabResults").onclick = ()=>showView("results");
+$("tabInfo").onclick = ()=>showView("info");
+$("btnBack").onclick = ()=>showView("input");
+
+$("btnTheme").onclick = function(){
+  const html = document.documentElement;
+  const next = html.getAttribute("data-theme")==="dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  this.textContent = next==="dark" ? "Light" : "Dark";
+};
+
+function tryUnlock(){
+  const v = ($("pwInput").value||"").trim().toLowerCase();
+  if(v==="demo"||v==="sudemo"){
+    $("lockScreen").style.display = "none";
+    buildStationGrid("stationInputs");
+    buildStationGrid("directStationInputs");
+  } else alert("Incorrect demo password.\nUse: demo");
+}
+$("btnUnlock").onclick = tryUnlock;
+$("pwInput").addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
+
+function buildStationGrid(id){
+  const box = $(id);
+  box.innerHTML = "";
+  for(let i=1;i<=MAX_STA;i++){
+    const d = document.createElement("div");
+    d.className = "sta";
+    d.innerHTML = "<span>S"+i+"</span><input type='text' inputmode='decimal' data-i='"+(i-1)+"'>";
+    box.appendChild(d);
+  }
+}
+function readStations(containerId){
+  const inputs = $(containerId).querySelectorAll("input");
+  const vals = []; let last=-1;
+  for(let i=0;i<inputs.length;i++){
+    const raw = (inputs[i].value||"").trim();
+    if(raw===""){ vals.push(null); continue; }
+    const v = parseFloat(raw);
+    if(isNaN(v)){ alert("Station "+(i+1)+" is invalid"); return null; }
+    vals.push(v); last=i;
+  }
+  if(last<2){ alert("Enter at least 3 station values"); return null; }
+  return vals.slice(0, last+1);
+}
+function fillStations(containerId, profile){
+  const inputs = $(containerId).querySelectorAll("input");
+  inputs.forEach((inp,i)=>{
+    inp.value = (profile && i<profile.length && profile[i]!=null) ? Number(profile[i]).toFixed(4) : "";
+  });
+}
+
+$("needleSelect").onchange = function(){
+  const n = this.value;
+  if(n && NEEDLES[n]) fillStations("stationInputs", NEEDLES[n]);
+};
+$("directNeedleSelect").onchange = function(){
+  const n = this.value;
+  if(n && NEEDLES[n]) fillStations("directStationInputs", NEEDLES[n]);
+};
+
+function rms(a,b){
+  const n=Math.min(a.length,b.length); let s=0,c=0;
+  for(let i=0;i<n;i++){
+    if(a[i]==null||b[i]==null) continue;
+    const d=a[i]-b[i]; s+=d*d; c++;
+  }
+  return c?Math.sqrt(s/c):999;
+}
+function fuelPct(profile, target){
+  const J2=JET*JET; const n=Math.min(profile.length,target.length);
+  let sc=0,st=0,c=0;
+  for(let i=0;i<n;i++){
+    if(profile[i]==null||target[i]==null) continue;
+    sc += J2-profile[i]*profile[i];
+    st += J2-target[i]*target[i];
+    c++;
+  }
+  return (c&&st>1e-12) ? (sc/st-1)*100 : 0;
+}
+
+$("btnMatch").onclick = function(){
+  const target = readStations("stationInputs");
+  if(!target) return;
+  lastTarget = target;
+  const results = [];
+  for(const [name, profile] of Object.entries(NEEDLES)){
+    const r = rms(profile, target);
+    const f = fuelPct(profile, target);
+    let dir = "Identical";
+    if(Math.abs(f)>=0.5) dir = f>0 ? "Richer" : "Leaner";
+    results.push({name, profile, rms:r, fuel:f, dir});
+  }
+  results.sort((a,b)=>a.rms-b.rms);
+  lastResults = results;
+  picked = new Set(results.slice(0,2).map(r=>r.name));
+  directProfile = null; directName = null;
+  renderResults();
+  drawAll();
+  showView("results");
+};
+
+function chip(dir){
+  const cls = dir==="Richer"?"chip-richer":dir==="Leaner"?"chip-leaner":"chip-ok";
+  return '<span class="chip '+cls+'">'+dir+'</span>';
+}
+function renderResults(){
+  const best = lastResults[0];
+  $("closestCard").innerHTML =
+    '<h2>Closest match</h2>'+
+    '<div style="font-size:1.35rem;font-weight:700;margin:4px 0">'+best.name+'</div>'+
+    '<div style="font-size:.9rem">RMS <strong>'+best.rms.toFixed(5)+'</strong> &nbsp; Fuel <strong>'+
+    (best.fuel>=0?"+":"")+best.fuel.toFixed(1)+'%</strong> '+chip(best.dir)+'</div>';
+
+  const richer = lastResults.filter(r=>r.dir==="Richer").slice(0,3);
+  const leaner = lastResults.filter(r=>r.dir==="Leaner").slice(0,3);
+  $("richerList").innerHTML = richer.length ? richer.map(r=>rowHtml(r,true)).join("") :
+    '<p class="hint">No richer alternatives in this small demo set.</p>';
+  $("leanerList").innerHTML = leaner.length ? leaner.map(r=>rowHtml(r,true)).join("") :
+    '<p class="hint">No leaner alternatives in this small demo set.</p>';
+  $("top20List").innerHTML = lastResults.map(r=>rowHtml(r,true)).join("");
+  updatePickCount();
+  buildLegend();
+}
+function rowHtml(r, withCheck){
+  const checked = picked.has(r.name) ? " checked" : "";
+  const cb = withCheck ? '<input type="checkbox" class="pick-check" data-name="'+r.name+'"'+checked+'>' : "";
+  return '<div class="list-row">'+cb+
+    '<div style="flex:1"><span class="name">'+r.name+'</span> '+chip(r.dir)+
+    '<div class="meta">RMS '+r.rms.toFixed(5)+' · Fuel '+(r.fuel>=0?"+":"")+r.fuel.toFixed(1)+'%</div></div></div>';
+}
+document.addEventListener("change", function(e){
+  if(e.target.classList.contains("pick-check")){
+    const n = e.target.dataset.name;
+    if(e.target.checked){
+      if(picked.size>=4){ e.target.checked=false; alert("Max 4 needles on graph"); return; }
+      picked.add(n);
+    } else picked.delete(n);
+    updatePickCount(); buildLegend(); drawAll();
+  }
+});
+function updatePickCount(){ $("pickCount").textContent = picked.size+" of 4 selected"; }
+function buildLegend(){
+  const items = [{name:"Target", color:"#94a3b8"}];
+  let i=0;
+  lastResults.forEach(r=>{
+    if(picked.has(r.name)) items.push({name:r.name, color:COLORS[i++%COLORS.length]});
+  });
+  if(directProfile) items.push({name:directName||"Direct", color:"#f97316"});
+  $("graphLegend").innerHTML = items.map(it=>'<span><i style="background:'+it.color+'"></i>'+it.name+'</span>').join("");
+}
+
+$("btnDirectApply").onclick = function(){
+  if(!lastTarget){ alert("Run Find matches first"); return; }
+  const fromSel = $("directNeedleSelect").value;
+  if(fromSel && NEEDLES[fromSel]){
+    directProfile = NEEDLES[fromSel]; directName = fromSel;
+  } else {
+    const p = readStations("directStationInputs");
+    if(!p) return;
+    directProfile = p; directName = "Direct";
+  }
+  const f = fuelPct(directProfile, lastTarget);
+  const r = rms(directProfile, lastTarget);
+  let dir="Identical"; if(Math.abs(f)>=0.5) dir=f>0?"Richer":"Leaner";
+  $("directMetrics").classList.remove("hidden");
+  $("directMetrics").innerHTML = "<strong>"+(directName||"Direct")+"</strong> · RMS "+r.toFixed(5)+
+    " · Fuel "+(f>=0?"+":"")+f.toFixed(1)+"% "+chip(dir);
+  buildLegend(); drawAll();
+};
+$("btnDirectClear").onclick = function(){
+  directProfile=null; directName=null;
+  $("directMetrics").classList.add("hidden");
+  $("directNeedleSelect").value="";
+  fillStations("directStationInputs", null);
+  buildLegend(); drawAll();
+};
+
+$("btnScaleOverview").onclick = function(){ fuelMode="overview"; this.classList.add("active"); $("btnScaleFull").classList.remove("active"); drawAll(); };
+$("btnScaleFull").onclick = function(){ fuelMode="full"; this.classList.add("active"); $("btnScaleOverview").classList.remove("active"); drawAll(); };
+
+function drawAll(){
+  if(!lastTarget) return;
+  const series = [];
+  let ci=0;
+  lastResults.forEach(r=>{
+    if(picked.has(r.name)) series.push({name:r.name, profile:r.profile, color:COLORS[ci++%COLORS.length]});
+  });
+  if(directProfile) series.push({name:directName||"Direct", profile:directProfile, color:"#f97316"});
+  drawChart($("chartDiameter"), series, lastTarget, "dia");
+  drawChart($("chartFuel"), series, lastTarget, "fuel");
+}
+
+function drawChart(canvas, series, target, mode){
+  const dpr = window.devicePixelRatio||1;
+  const cssW = canvas.clientWidth||320, cssH=220;
+  canvas.width = Math.floor(cssW*dpr); canvas.height=Math.floor(cssH*dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--chart-bg").trim()||"#0a1018";
+  ctx.fillRect(0,0,cssW,cssH);
+
+  let n = target.length;
+  series.forEach(s=>{ if(s.profile.length>n) n=s.profile.length; });
+  n = Math.min(n, MAX_STA);
+
+  const pad={l:44,r:10,t:14,b:26};
+  const w=cssW-pad.l-pad.r, h=cssH-pad.t-pad.b;
+
+  function yVal(profile, i){
+    if(mode==="dia") return (i<profile.length)?profile[i]:null;
+    if(i>=target.length||target[i]==null||i>=profile.length||profile[i]==null) return null;
+    const J2=JET*JET;
+    const gapC=J2-profile[i]*profile[i], gapT=J2-target[i]*target[i];
+    return gapT>1e-12 ? (gapC/gapT-1)*100 : 0;
+  }
+
+  const allY=[];
+  if(mode==="dia") target.forEach(v=>{ if(v!=null) allY.push(v); });
+  series.forEach(s=>{
+    for(let i=0;i<n;i++){ const v=yVal(s.profile,i); if(v!=null&&isFinite(v)) allY.push(v); }
+  });
+  if(!allY.length) return;
+  let ymin=Math.min(...allY), ymax=Math.max(...allY);
+  if(mode==="fuel"){
+    if(fuelMode==="overview" && n>4){
+      const mid=[];
+      series.forEach(s=>{ for(let i=2;i<n-2;i++){ const v=yVal(s.profile,i); if(v!=null) mid.push(v); } });
+      if(mid.length){ ymin=Math.min(...mid); ymax=Math.max(...mid); }
+    }
+    ymin=Math.min(ymin,-2); ymax=Math.max(ymax,2);
+  }
+  const span=ymax-ymin||1; ymin-=span*0.1; ymax+=span*0.1;
+
+  const xAt=i=>pad.l+(i/Math.max(n-1,1))*w;
+  const yAt=v=>pad.t+(1-(v-ymin)/(ymax-ymin))*h;
+  const clamp=v=>Math.max(ymin,Math.min(ymax,v));
+
+  ctx.strokeStyle="#1e293b"; ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){ const y=pad.t+(g/4)*h; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+w,y); ctx.stroke(); }
+  if(mode==="fuel"&&ymin<0&&ymax>0){
+    ctx.strokeStyle="#475569"; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(pad.l,yAt(0)); ctx.lineTo(pad.l+w,yAt(0)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle="#94a3b8"; ctx.font="10px system-ui"; ctx.textAlign="center";
+  for(let i=0;i<n;i++){ if(n>10&&i%2) continue; ctx.fillText(String(i+1), xAt(i), cssH-8); }
+  ctx.textAlign="right";
+  ctx.fillText(ymax.toFixed(mode==="dia"?3:0), pad.l-4, pad.t+4);
+  ctx.fillText(ymin.toFixed(mode==="dia"?3:0), pad.l-4, pad.t+h);
+
+  // target reference (diameter)
+  if(mode==="dia"){
+    ctx.strokeStyle="#64748b"; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); let started=false;
+    for(let i=0;i<target.length;i++){
+      if(target[i]==null) continue;
+      const x=xAt(i), y=yAt(target[i]);
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  series.forEach(s=>{
+    // find last valid
+    let lastValid=-1;
+    for(let i=0;i<n;i++){ const v=yVal(s.profile,i); if(v!=null&&isFinite(v)) lastValid=i; }
+    if(lastValid<0) return;
+    ctx.strokeStyle=s.color; ctx.lineWidth=2; ctx.lineJoin="round";
+    ctx.beginPath(); let started=false;
+    for(let i=0;i<=lastValid;i++){
+      const v=yVal(s.profile,i);
+      if(v==null||!isFinite(v)) continue;
+      const x=xAt(i), y=yAt(clamp(v));
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle=s.color;
+    for(let i=0;i<=lastValid;i++){
+      const v=yVal(s.profile,i);
+      if(v==null||!isFinite(v)) continue;
+      ctx.beginPath(); ctx.arc(xAt(i), yAt(clamp(v)), 2.5, 0, Math.PI*2); ctx.fill();
+    }
+  });
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (e) { console.log('SW', e); });
+  });
+}
+</script>
+</body>
+</html>
